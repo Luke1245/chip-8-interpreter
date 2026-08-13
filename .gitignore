@@ -53,3 +53,9 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Compilation databse
+compile_commands.json
+
+# Other
+/build/

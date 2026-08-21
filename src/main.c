@@ -19,18 +19,18 @@ typedef struct config_type {
 } config_t;
 
 bool set_config(config_t* config, int argc, char* argv[]) {
-    // Set defaults
-    config->window_width = 64;       // Original CHIP-8 resolution
-    config->window_height = 32;      // Original CHIP-8 resolution
-    config->fg_colour = 0xFFFFFFFF;  // RGBA8888
-    config->bg_colour = 0xFF0000FF;  // RGBA8888
-    config->scale_factor = 20;
+    (void)argc;
+    (void)argv;
 
-    // Supress compiler warnings
+    *config = (config_t){
+        .window_width = 64,       // Original CHIP-8 resolution
+        .window_height = 32,      // Original CHIP-8 resolution
+        .fg_colour = 0xFFFFFFFF,  // RGBA8888
+        .bg_colour = 0xFF0000FF,  // RGBA8888
+        .scale_factor = 20,
+    };
+
     // TODO: Implement command line arguments
-    for (int i = 1; i < argc; i++) {
-        (void)argv[i];
-    }
 
     return true;
 }

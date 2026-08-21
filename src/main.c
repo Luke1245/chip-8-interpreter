@@ -18,6 +18,12 @@ typedef struct config_type {
                             // resolution is too small for modern displays)
 } config_t;
 
+typedef enum machine_state_type { RUNNING, PAUSED, QUIT } machine_state_t;
+
+typedef struct chip8_type {
+    machine_state_t state;
+} chip8_t;
+
 bool set_config(config_t* config, int argc, char* argv[]) {
     (void)argc;
     (void)argv;
@@ -62,6 +68,14 @@ bool initialise_sdl(sdl_t* sdl, config_t config) {
     return true;
 }
 
+bool initialise_chip8(chip8_t* chip8) {
+    *chip8 = (chip8_t){
+        .state = RUNNING,
+    };
+
+    return true;
+}
+
 void exit_cleanup(sdl_t* sdl) {
     // Renderer must be destroyed before window
     SDL_DestroyRenderer(sdl->renderer);
@@ -85,10 +99,38 @@ void clear_screen(const config_t config, const sdl_t sdl) {
 // This will do more later, currently wrapper
 void update_screen(const sdl_t sdl) { SDL_RenderPresent(sdl.renderer); }
 
+void handle_input(chip8_t* chip8) {
+    SDL_Event event;
+
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+            case SDL_EVENT_QUIT:
+                chip8->state = QUIT;
+                return;
+
+            case SDL_EVENT_KEY_DOWN:
+                switch (event.key.key) {
+                    case SDLK_ESCAPE:
+                        chip8->state = QUIT;
+                        return;
+
+                    default:
+                        break;
+                }
+
+            case SDL_EVENT_KEY_UP:
+                break;
+
+            default:
+                break;
+        }
+    }
+}
+
 int main(int argc, char* argv[]) {
     sdl_t sdl = {0};
     config_t config = {0};
-    SDL_Event event = {0};
+    chip8_t chip8 = {0};
 
     // Ensure that config is correctly set
     if (!set_config(&config, argc, argv)) {
@@ -100,16 +142,17 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // Main loop
-    while (true) {
-        // Allow user to quit window
-        SDL_PollEvent(&event);
-        if (event.type == SDL_EVENT_QUIT) {
-            break;
-        }
+    if (!initialise_chip8(&chip8)) {
+        exit(EXIT_FAILURE);
+    }
 
+    // Main loop
+    while (chip8.state != QUIT) {
+        // Allow user to quit window
         // Delay for 60hz (approx)
         SDL_Delay(16);
+
+        handle_input(&chip8);
 
         clear_screen(config, sdl);
         update_screen(sdl);

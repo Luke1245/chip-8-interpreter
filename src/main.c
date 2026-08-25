@@ -22,6 +22,16 @@ typedef enum machine_state_type { RUNNING, PAUSED, QUIT } machine_state_t;
 
 typedef struct chip8_type {
     machine_state_t state;
+    uint8_t ram[4096];
+    uint8_t V[16];  // Data registers V0-VF
+    uint16_t I;     // Address register (originally 12 bits wide)
+    uint16_t PC;    // Program counter
+    uint16_t stack[16];
+    uint8_t delay_timer;    // Count down at 60hz
+    uint8_t sound_timer;    // Count down at 60hz, play sound when value != 0
+    bool display[64 * 32];  // Emulating original pixels ON or OFF
+    bool keyboard[16];  // 16-key hexadecimal keyboard, Bool on or off key state
+    const char* rom_name;  // ROM currently being emulated
 } chip8_t;
 
 bool set_config(config_t* config, int argc, char* argv[]) {
@@ -68,9 +78,51 @@ bool initialise_sdl(sdl_t* sdl, config_t config) {
     return true;
 }
 
-bool initialise_chip8(chip8_t* chip8) {
+bool initialise_chip8(chip8_t* chip8, const char* rom_name) {
+    const uint32_t entry_point =
+        0x200;  // First 512 bytes are where original interpreter was located
+
+    // Load font
+    const uint8_t font[] = {
+#embed "font.bin"
+    };
+
+    memcpy(chip8->ram, font, sizeof(font));
+
+    // Load ROM
+    FILE* rom = fopen(rom_name, "rb");
+
+    if (!rom) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "ROM file %s does not exist or is invalid\n", rom_name);
+        return false;
+    }
+
+    // Check ROM size
+    fseek(rom, 0, SEEK_END);
+    const size_t rom_size = ftell(rom);
+    const size_t max_size = sizeof chip8->ram - entry_point;
+    rewind(rom);
+
+    if (rom_size > max_size) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "ROM file %s is too big",
+                     rom_name);
+        return false;
+    }
+
+    if (fread(chip8->ram + entry_point, rom_size, 1, rom) != 1) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "Unable to read ROM file into memory");
+        return false;
+    }
+
+    fclose(rom);
+
+    // Load defaults
     *chip8 = (chip8_t){
         .state = RUNNING,
+        .PC = entry_point,
+        .rom_name = rom_name,
     };
 
     return true;
@@ -114,6 +166,14 @@ void handle_input(chip8_t* chip8) {
                         chip8->state = QUIT;
                         return;
 
+                    case SDLK_SPACE:
+                        if (chip8->state == RUNNING) {
+                            chip8->state = PAUSED;
+                        } else {
+                            chip8->state = RUNNING;  // Resume
+                        }
+                        return;
+
                     default:
                         break;
                 }
@@ -142,7 +202,8 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if (!initialise_chip8(&chip8)) {
+    const char* rom_name = argv[1];
+    if (!initialise_chip8(&chip8, rom_name)) {
         exit(EXIT_FAILURE);
     }
 
@@ -153,6 +214,8 @@ int main(int argc, char* argv[]) {
         SDL_Delay(16);
 
         handle_input(&chip8);
+
+        if (chip8.state == PAUSED) continue;
 
         clear_screen(config, sdl);
         update_screen(sdl);

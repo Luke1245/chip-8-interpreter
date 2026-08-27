@@ -37,6 +37,7 @@ typedef struct {
     uint16_t PC;         // Program counter
     instruction_t inst;  // Instruction being executed
     uint16_t stack[16];
+    uint16_t* stack_ptr;
     uint8_t delay_timer;    // Count down at 60hz
     uint8_t sound_timer;    // Count down at 60hz, play sound when value != 0
     bool display[64 * 32];  // Emulating original pixels ON or OFF
@@ -92,6 +93,14 @@ bool initialise_chip8(chip8_t* chip8, const char* rom_name) {
     const uint32_t entry_point =
         0x200;  // First 512 bytes are where original interpreter was located
 
+    // Load defaults
+    *chip8 = (chip8_t){
+        .state = RUNNING,
+        .PC = entry_point,
+        .rom_name = rom_name,
+        .stack_ptr = &chip8->stack[0],
+    };
+
     // Load font
     const uint8_t font[] = {
 #embed "font.bin"
@@ -128,13 +137,6 @@ bool initialise_chip8(chip8_t* chip8, const char* rom_name) {
 
     fclose(rom);
 
-    // Load defaults
-    *chip8 = (chip8_t){
-        .state = RUNNING,
-        .PC = entry_point,
-        .rom_name = rom_name,
-    };
-
     return true;
 }
 
@@ -158,8 +160,38 @@ void clear_screen(const config_t config, const sdl_t sdl) {
     SDL_RenderClear(sdl.renderer);
 }
 
-// This will do more later, currently wrapper
-void update_screen(const sdl_t sdl) { SDL_RenderPresent(sdl.renderer); }
+void update_screen(const sdl_t sdl, const config_t config,
+                   const chip8_t chip8) {
+    SDL_FRect rect = {
+        .x = 0, .y = 0, .w = config.scale_factor, .h = config.scale_factor};
+
+    const uint8_t fg_r = (config.fg_colour >> 24) & 0xFF;
+    const uint8_t fg_g = (config.fg_colour >> 16) & 0xFF;
+    const uint8_t fg_b = (config.fg_colour >> 8) & 0xFF;
+    const uint8_t fg_a = (config.fg_colour >> 0) & 0xFF;
+
+    const uint8_t bg_r = (config.bg_colour >> 24) & 0xFF;
+    const uint8_t bg_g = (config.bg_colour >> 16) & 0xFF;
+    const uint8_t bg_b = (config.bg_colour >> 8) & 0xFF;
+    const uint8_t bg_a = (config.bg_colour >> 0) & 0xFF;
+
+    for (uint32_t i = 0; i < sizeof(chip8.display); i++) {
+        rect.x = (i % config.window_width) * config.scale_factor;
+        rect.y = (i / config.window_width) * config.scale_factor;
+
+        if (chip8.display[i]) {
+            // Pixel is on: draw foreground colour
+            SDL_SetRenderDrawColor(sdl.renderer, fg_r, fg_g, fg_b, fg_a);
+            SDL_RenderFillRect(sdl.renderer, &rect);
+        } else {
+            // Pixel is off: draw background colour
+            SDL_SetRenderDrawColor(sdl.renderer, bg_r, bg_g, bg_b, bg_a);
+            SDL_RenderFillRect(sdl.renderer, &rect);
+        }
+    }
+
+    SDL_RenderPresent(sdl.renderer);
+}
 
 void handle_input(chip8_t* chip8) {
     SDL_Event event;
@@ -197,7 +229,7 @@ void handle_input(chip8_t* chip8) {
     }
 }
 
-void emulate_instruction(chip8_t* chip8) {
+void emulate_instruction(chip8_t* chip8, const config_t config) {
     // Combine two opcode RAM bytes into single value
     chip8->inst.opcode =
         (chip8->ram[chip8->PC] << 8) | (chip8->ram[chip8->PC + 1]);
@@ -211,6 +243,79 @@ void emulate_instruction(chip8_t* chip8) {
     chip8->inst.Y = (chip8->inst.opcode >> 4) & 0x000F;
 
     switch ((chip8->inst.opcode >> 12) & 0x000F) {
+        case 0x000:
+            if (chip8->inst.NN == 0xE0) {
+                // 0x00E0: Clear screen
+                memset(&chip8->display[0], 0, sizeof(chip8->display));
+            } else if (chip8->inst.NN == 0xEE) {
+                // 0xEE: Return from a subroutine
+                chip8->stack_ptr--;
+                chip8->PC = *chip8->stack_ptr;
+            }
+            break;
+
+        case 0x001:
+            // 0x1NNN: Jumps to address NNN
+            chip8->PC = chip8->inst.NNN;
+            break;
+
+        case 0x002:
+            // 0x2NNN: Calls a subroutine at NNN
+            *chip8->stack_ptr = chip8->PC;
+            chip8->stack_ptr++;
+            chip8->PC = chip8->inst.NNN;
+            break;
+
+        case 0x006:
+            // 0x6XNN: Sets VX to NN
+            chip8->V[chip8->inst.X] = chip8->inst.NN;
+            break;
+
+        case 0x007:
+            // 0x7XNN: Adds NN to VX
+            chip8->V[chip8->inst.X] += chip8->inst.NN;
+            break;
+
+        case 0x00A:
+
+            // 0xANNN: Set I to NNN
+            chip8->I = chip8->inst.NNN;
+            break;
+
+        case 0x00D:
+            // 0xDXYN: Draws a sprite at coord (VX, VY).
+            //  Sprite has a width of 8 pixels and a height of N pixels
+            uint8_t X_coord = chip8->V[chip8->inst.X] % config.window_width;
+            uint8_t Y_coord = chip8->V[chip8->inst.Y] % config.window_height;
+            const uint8_t X_origin = X_coord;
+
+            chip8->V[0xF] = 0;  // Init carry flag
+
+            // Loop over every row of sprite
+            for (uint8_t i = 0; i < chip8->inst.N; i++) {
+                const uint8_t sprite_data = chip8->ram[chip8->I + i];
+                X_coord = X_origin;
+
+                for (int8_t j = 7; j >= 0; j--) {
+                    // Set VF if sprite pixel and display pixel is on
+                    // (collision)
+                    bool* pixel = &chip8->display[Y_coord * 64 + X_coord];
+                    bool sprite_bit = (sprite_data & (1 << j));
+
+                    if (sprite_bit && *pixel) {
+                        chip8->V[0xF] = 1;
+                    }
+
+                    *pixel ^= sprite_bit;
+
+                    // If hit right edge of screen stop drawing
+                    if (X_coord++ >= 64) break;
+                }
+                // If hit bottom edge of screen stop drawing
+                if (Y_coord++ >= 32) break;
+            }
+            break;
+
         default:
             break;  // Unimplemented instructions TODO: debug info?
     }
@@ -236,6 +341,8 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    clear_screen(config, sdl);
+
     const char* rom_name = argv[1];
     if (!initialise_chip8(&chip8, rom_name)) {
         exit(EXIT_FAILURE);
@@ -249,12 +356,11 @@ int main(int argc, char* argv[]) {
 
         handle_input(&chip8);
 
-        emulate_instruction(&chip8);
-
         if (chip8.state == PAUSED) continue;
 
-        clear_screen(config, sdl);
-        update_screen(sdl);
+        emulate_instruction(&chip8, config);
+
+        update_screen(sdl, config, chip8);
     }
 
     exit_cleanup(&sdl);

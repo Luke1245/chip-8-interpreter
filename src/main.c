@@ -4,12 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct sdl_type {
+typedef struct {
     SDL_Window* window;
     SDL_Renderer* renderer;
 } sdl_t;
 
-typedef struct config_type {
+typedef struct {
     uint32_t window_width;
     uint32_t window_height;
     uint32_t fg_colour;     // Foreground colour
@@ -20,12 +20,22 @@ typedef struct config_type {
 
 typedef enum machine_state_type { RUNNING, PAUSED, QUIT } machine_state_t;
 
-typedef struct chip8_type {
+typedef struct {
+    uint16_t opcode;  // 2 bytes of RAM = 1 opcode
+    uint16_t NNN;     // address
+    uint8_t NN;       // 8-bit constant
+    uint8_t N;        // 4-bit (originally) constant
+    uint8_t X;        // 4-bit (originally) register identifier
+    uint8_t Y;        // 4-bit (originally) register identifier
+} instruction_t;
+
+typedef struct {
     machine_state_t state;
     uint8_t ram[4096];
-    uint8_t V[16];  // Data registers V0-VF
-    uint16_t I;     // Address register (originally 12 bits wide)
-    uint16_t PC;    // Program counter
+    uint8_t V[16];       // Data registers V0-VF
+    uint16_t I;          // Address register (originally 12 bits wide)
+    uint16_t PC;         // Program counter
+    instruction_t inst;  // Instruction being executed
     uint16_t stack[16];
     uint8_t delay_timer;    // Count down at 60hz
     uint8_t sound_timer;    // Count down at 60hz, play sound when value != 0
@@ -42,7 +52,7 @@ bool set_config(config_t* config, int argc, char* argv[]) {
         .window_width = 64,       // Original CHIP-8 resolution
         .window_height = 32,      // Original CHIP-8 resolution
         .fg_colour = 0xFFFFFFFF,  // RGBA8888
-        .bg_colour = 0xFF0000FF,  // RGBA8888
+        .bg_colour = 0x000000FF,  // RGBA8888
         .scale_factor = 20,
     };
 
@@ -187,10 +197,34 @@ void handle_input(chip8_t* chip8) {
     }
 }
 
+void emulate_instruction(chip8_t* chip8) {
+    // Combine two opcode RAM bytes into single value
+    chip8->inst.opcode =
+        (chip8->ram[chip8->PC] << 8) | (chip8->ram[chip8->PC + 1]);
+    chip8->PC += 2;  // Move to next instruction
+
+    // Obtain components of instruction format
+    chip8->inst.NNN = (chip8->inst.opcode & 0x0FFF);
+    chip8->inst.NN = (chip8->inst.opcode & 0x00FF);
+    chip8->inst.N = (chip8->inst.opcode & 0x000F);
+    chip8->inst.X = (chip8->inst.opcode >> 8) & 0x000F;
+    chip8->inst.Y = (chip8->inst.opcode >> 4) & 0x000F;
+
+    switch ((chip8->inst.opcode >> 12) & 0x000F) {
+        default:
+            break;  // Unimplemented instructions TODO: debug info?
+    }
+}
+
 int main(int argc, char* argv[]) {
     sdl_t sdl = {0};
     config_t config = {0};
     chip8_t chip8 = {0};
+
+    if (argc < 2) {
+        fprintf(stderr, "Usage %s <rom_name>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
 
     // Ensure that config is correctly set
     if (!set_config(&config, argc, argv)) {
@@ -214,6 +248,8 @@ int main(int argc, char* argv[]) {
         SDL_Delay(16);
 
         handle_input(&chip8);
+
+        emulate_instruction(&chip8);
 
         if (chip8.state == PAUSED) continue;
 

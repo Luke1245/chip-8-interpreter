@@ -250,7 +250,7 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
     chip8->inst.X = (chip8->inst.opcode >> 8) & 0x000F;
     chip8->inst.Y = (chip8->inst.opcode >> 4) & 0x000F;
 
-    DEBUG_PRINT("Address: 0x%04X, Opcode: 0x%04X\n", chip8->PC - 2,
+    DEBUG_PRINT("Address: 0x%04X, Opcode: 0x%04X, Desc: ", chip8->PC - 2,
                 chip8->inst.opcode);
 
     switch ((chip8->inst.opcode >> 12) & 0x000F) {
@@ -258,16 +258,23 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
             if (chip8->inst.NN == 0xE0) {
                 // 0x00E0: Clear screen
                 memset(&chip8->display[0], 0, sizeof(chip8->display));
+
+                DEBUG_PRINT("Clear screen\n");
+
             } else if (chip8->inst.NN == 0xEE) {
                 // 0xEE: Return from a subroutine
                 chip8->stack_ptr--;
                 chip8->PC = *chip8->stack_ptr;
+
+                DEBUG_PRINT("Return to address 0x%04X\n", chip8->PC);
             }
             break;
 
         case 0x001:
             // 0x1NNN: Jumps to address NNN
             chip8->PC = chip8->inst.NNN;
+
+            DEBUG_PRINT("Jump to address 0x%04X\n", chip8->inst.NNN);
             break;
 
         case 0x002:
@@ -275,22 +282,32 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
             *chip8->stack_ptr = chip8->PC;
             chip8->stack_ptr++;
             chip8->PC = chip8->inst.NNN;
+
+            DEBUG_PRINT("Call subroutine at 0x%04X\n", chip8->inst.NNN);
             break;
 
         case 0x006:
             // 0x6XNN: Sets VX to NN
             chip8->V[chip8->inst.X] = chip8->inst.NN;
+
+            DEBUG_PRINT("Set register V%X = 0x%02X\n", chip8->inst.X,
+                        chip8->inst.NN);
             break;
 
         case 0x007:
             // 0x7XNN: Adds NN to VX
             chip8->V[chip8->inst.X] += chip8->inst.NN;
+
+            DEBUG_PRINT("V%X += 0x%02X, RES: 0x%02X\n", chip8->inst.X,
+                        chip8->inst.NN, chip8->V[chip8->inst.X]);
             break;
 
         case 0x00A:
 
             // 0xANNN: Set I to NNN
             chip8->I = chip8->inst.NNN;
+
+            DEBUG_PRINT("Set I to %04X\n", chip8->I);
             break;
 
         case 0x00D:
@@ -325,10 +342,17 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
                 // If hit bottom edge of screen stop drawing
                 if (Y_coord++ >= 32) break;
             }
+
+            DEBUG_PRINT(
+                "Draw %u height sprite at coords V%X (0x%02X), V%X (0x%02X). "
+                "From memory location 0x%04X. Set VF if any collisions\n",
+                chip8->inst.N, chip8->inst.X, chip8->V[chip8->inst.X],
+                chip8->inst.Y, chip8->V[chip8->inst.Y], chip8->I);
             break;
 
         default:
-            break;  // Unimplemented instructions TODO: debug info?
+            DEBUG_PRINT("Unimplemented instruction\n");
+            break;
     }
 }
 

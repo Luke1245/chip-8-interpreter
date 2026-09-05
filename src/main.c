@@ -4,6 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef DEBUG
+#define DEBUG_PRINT(...) printf(__VA_ARGS__)
+#else
+#define DEBUG_PRINT(...) \
+    do {                 \
+    } while (0)
+#endif
+
 typedef struct {
     SDL_Window* window;
     SDL_Renderer* renderer;
@@ -241,6 +249,9 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
     chip8->inst.N = (chip8->inst.opcode & 0x000F);
     chip8->inst.X = (chip8->inst.opcode >> 8) & 0x000F;
     chip8->inst.Y = (chip8->inst.opcode >> 4) & 0x000F;
+
+    DEBUG_PRINT("Address: 0x%04X, Opcode: 0x%04X\n", chip8->PC - 2,
+                chip8->inst.opcode);
 
     switch ((chip8->inst.opcode >> 12) & 0x000F) {
         case 0x000:

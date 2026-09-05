@@ -4,20 +4,33 @@ LDFLAGS := $(shell pkg-config --libs sdl3)
 
 SRC_DIR := src
 BUILD_DIR := build
-TARGET := $(BUILD_DIR)/main
+RELEASE_DIR := $(BUILD_DIR)/release
+DEBUG_DIR := $(BUILD_DIR)/debug
+
+TARGET := $(RELEASE_DIR)/main
+TARGET_DEBUG := $(DEBUG_DIR)/main
 
 SRCS := $(wildcard $(SRC_DIR)/*.c)
-OBJS := $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+OBJS_RELEASE := $(SRCS:$(SRC_DIR)/%.c=$(RELEASE_DIR)/%.o)
+OBJS_DEBUG := $(SRCS:$(SRC_DIR)/%.c=$(DEBUG_DIR)/%.o)
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS) | $(BUILD_DIR)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+debug: $(TARGET_DEBUG)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
+$(TARGET): $(OBJS_RELEASE) | $(RELEASE_DIR)
+	$(CC) $(OBJS_RELEASE) -o $@ $(LDFLAGS)
+
+$(TARGET_DEBUG): $(OBJS_DEBUG) | $(DEBUG_DIR)
+	$(CC) $(OBJS_DEBUG) -o $@ $(LDFLAGS)
+
+$(RELEASE_DIR)/%.o: $(SRC_DIR)/%.c | $(RELEASE_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR):
+$(DEBUG_DIR)/%.o: $(SRC_DIR)/%.c | $(DEBUG_DIR)
+	$(CC) $(CFLAGS) -DDEBUG -g -c $< -o $@
+
+$(RELEASE_DIR) $(DEBUG_DIR):
 	mkdir -p $@ 
 
 clean: 

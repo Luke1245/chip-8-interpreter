@@ -286,6 +286,42 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
             DEBUG_PRINT("Call subroutine at 0x%04X\n", chip8->inst.NNN);
             break;
 
+        case 0x003:
+            // 0x3XNN: Skips next instruction if VX == NN
+            if (chip8->V[chip8->inst.X] == chip8->inst.NN) {
+                chip8->PC += 2;
+            }
+
+            DEBUG_PRINT("Skip next INST if VX (V%0X) (%02X) == NN (%02X)\n",
+                        chip8->inst.X, chip8->V[chip8->inst.X], chip8->inst.NN);
+            break;
+
+        case 0x004:
+            // 0x4XNN: Skips next instruction if VX != NN
+            if (chip8->V[chip8->inst.X] != chip8->inst.NN) {
+                chip8->PC += 2;
+            }
+
+            DEBUG_PRINT("Skip next INST if VX (V%0X) (%02X) != NN (%02X)\n",
+                        chip8->inst.X, chip8->V[chip8->inst.X], chip8->inst.NN);
+            break;
+
+        case 0x005:
+            if (chip8->inst.N != 0) {
+                break;
+            }
+
+            // 0x5XY0: Skips next instruction if VX == VY
+            if (chip8->V[chip8->inst.X] == chip8->V[chip8->inst.Y]) {
+                chip8->PC += 2;
+            }
+
+            DEBUG_PRINT(
+                "Skip next INST if VX (V%0X) (%02X) == VY (V%0X) (%02X)\n",
+                chip8->inst.X, chip8->V[chip8->inst.X], chip8->inst.Y,
+                chip8->V[chip8->inst.Y]);
+            break;
+
         case 0x006:
             // 0x6XNN: Sets VX to NN
             chip8->V[chip8->inst.X] = chip8->inst.NN;

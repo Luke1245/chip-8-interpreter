@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #ifdef DEBUG
 #define DEBUG_PRINT(...) printf(__VA_ARGS__)
@@ -211,12 +212,14 @@ void handle_input(chip8_t* chip8) {
                 return;
 
             case SDL_EVENT_KEY_DOWN:
-                switch (event.key.key) {
-                    case SDLK_ESCAPE:
+                // Use scancodes for portability between non QWERTY keyboard
+                // layouts
+                switch (event.key.scancode) {
+                    case SDL_SCANCODE_ESCAPE:
                         chip8->state = QUIT;
                         return;
 
-                    case SDLK_SPACE:
+                    case SDL_SCANCODE_SPACE:
                         if (chip8->state == RUNNING) {
                             chip8->state = PAUSED;
                         } else {
@@ -224,12 +227,120 @@ void handle_input(chip8_t* chip8) {
                         }
                         return;
 
+                    case SDL_SCANCODE_1:
+                        chip8->keyboard[0x1] = true;
+                        break;
+                    case SDL_SCANCODE_2:
+                        chip8->keyboard[0x2] = true;
+                        break;
+                    case SDL_SCANCODE_3:
+                        chip8->keyboard[0x3] = true;
+                        break;
+                    case SDL_SCANCODE_4:
+                        chip8->keyboard[0xC] = true;
+                        break;
+
+                    case SDL_SCANCODE_Q:
+                        chip8->keyboard[0x4] = true;
+                        break;
+                    case SDL_SCANCODE_W:
+                        chip8->keyboard[0x5] = true;
+                        break;
+                    case SDL_SCANCODE_E:
+                        chip8->keyboard[0x6] = true;
+                        break;
+                    case SDL_SCANCODE_R:
+                        chip8->keyboard[0xD] = true;
+                        break;
+
+                    case SDL_SCANCODE_A:
+                        chip8->keyboard[0x7] = true;
+                        break;
+                    case SDL_SCANCODE_S:
+                        chip8->keyboard[0x8] = true;
+                        break;
+                    case SDL_SCANCODE_D:
+                        chip8->keyboard[0x9] = true;
+                        break;
+                    case SDL_SCANCODE_F:
+                        chip8->keyboard[0xE] = true;
+                        break;
+
+                    case SDL_SCANCODE_Z:
+                        chip8->keyboard[0xA] = true;
+                        break;
+                    case SDL_SCANCODE_X:
+                        chip8->keyboard[0x0] = true;
+                        break;
+                    case SDL_SCANCODE_C:
+                        chip8->keyboard[0xB] = true;
+                        break;
+                    case SDL_SCANCODE_V:
+                        chip8->keyboard[0xF] = true;
+                        break;
+
                     default:
                         break;
                 }
                 break;
 
             case SDL_EVENT_KEY_UP:
+                switch (event.key.scancode) {
+                    case SDL_SCANCODE_1:
+                        chip8->keyboard[0x1] = false;
+                        break;
+                    case SDL_SCANCODE_2:
+                        chip8->keyboard[0x2] = false;
+                        break;
+                    case SDL_SCANCODE_3:
+                        chip8->keyboard[0x3] = false;
+                        break;
+                    case SDL_SCANCODE_4:
+                        chip8->keyboard[0xC] = false;
+                        break;
+
+                    case SDL_SCANCODE_Q:
+                        chip8->keyboard[0x4] = false;
+                        break;
+                    case SDL_SCANCODE_W:
+                        chip8->keyboard[0x5] = false;
+                        break;
+                    case SDL_SCANCODE_E:
+                        chip8->keyboard[0x6] = false;
+                        break;
+                    case SDL_SCANCODE_R:
+                        chip8->keyboard[0xD] = false;
+                        break;
+
+                    case SDL_SCANCODE_A:
+                        chip8->keyboard[0x7] = false;
+                        break;
+                    case SDL_SCANCODE_S:
+                        chip8->keyboard[0x8] = false;
+                        break;
+                    case SDL_SCANCODE_D:
+                        chip8->keyboard[0x9] = false;
+                        break;
+                    case SDL_SCANCODE_F:
+                        chip8->keyboard[0xE] = false;
+                        break;
+
+                    case SDL_SCANCODE_Z:
+                        chip8->keyboard[0xA] = false;
+                        break;
+                    case SDL_SCANCODE_X:
+                        chip8->keyboard[0x0] = false;
+                        break;
+                    case SDL_SCANCODE_C:
+                        chip8->keyboard[0xB] = false;
+                        break;
+                    case SDL_SCANCODE_V:
+                        chip8->keyboard[0xF] = false;
+                        break;
+
+                    default:
+                        break;
+                }
                 break;
 
             default:
@@ -496,6 +607,19 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
                 chip8->inst.NNN, chip8->V[0x0], chip8->PC);
             break;
 
+        case 0x00C:
+            // 0xCXNN: Set VX to result of bitwise and operation on a random
+            // number
+            uint8_t rand_val = rand() % 256;
+            chip8->V[chip8->inst.X] = rand_val & chip8->inst.NN;
+
+            DEBUG_PRINT(
+                "Set V%X to rand_val (0x%04X) bitwise AND NN (0x%02X) RES = "
+                "0x%02X\n",
+                chip8->inst.X, rand_val, chip8->inst.NN,
+                chip8->V[chip8->inst.X]);
+            break;
+
         case 0x00D:
             // 0xDXYN: Draws a sprite at coord (VX, VY).
             //  Sprite has a width of 8 pixels and a height of N pixels
@@ -536,6 +660,145 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
                 chip8->inst.Y, chip8->V[chip8->inst.Y], chip8->I);
             break;
 
+        case 0x00E:
+            uint8_t key = chip8->V[chip8->inst.X];
+            if (chip8->inst.NN == 0x9E) {
+                // 0xEX9E: Skip next instruction if key stored in VX is pressed
+                if (chip8->keyboard[key]) {
+                    chip8->PC += 2;
+
+                    DEBUG_PRINT(
+                        "Skip next instruction if key in V%X is pressed: Key "
+                        "value: %d\n",
+                        chip8->inst.X, chip8->keyboard[key]);
+                }
+            } else if (chip8->inst.NN == 0xA1) {
+                // 0xEXA1: Skip next instruction if key stored in VX is not
+                // pressed
+                if (!chip8->keyboard[key]) {
+                    chip8->PC += 2;
+
+                    DEBUG_PRINT(
+                        "Skip next instruction if key in V%X is NOT pressed: "
+                        "Key value: %d\n",
+                        chip8->inst.X, chip8->keyboard[key]);
+                }
+            }
+            break;
+
+        case 0x00F:
+            switch (chip8->inst.NN) {
+                case 0x07:
+                    // 0xFX07: Set VX to value of the delay timer
+                    chip8->V[chip8->inst.X] = chip8->delay_timer;
+                    DEBUG_PRINT("Set V%X to value of delay timer (%02X)\n",
+                                chip8->inst.X, chip8->delay_timer);
+                    break;
+
+                case 0x0A:
+                    // 0xFX0A: Await key press, key pressed and stored in VX
+                    // (instruction processing halted until next key event)
+                    bool key_press = false;
+                    for (uint8_t i = 0; i < sizeof chip8->keyboard; i++) {
+                        if (chip8->keyboard[i]) {
+                            chip8->V[chip8->inst.X] = i;
+                            key_press = true;
+                            break;
+                        }
+                    }
+                    if (!key_press) {
+                        // If no key press, repeat instruction until key press
+                        chip8->PC -= 2;
+                    }
+
+                    DEBUG_PRINT(
+                        "Await key press: pressed key? %d, key is: 0x%02X\n",
+                        key_press, chip8->V[chip8->inst.X]);
+                    break;
+
+                case 0x15:
+                    // 0xFX15: Sets delay timer to VX
+                    chip8->delay_timer = chip8->V[chip8->inst.X];
+
+                    DEBUG_PRINT("Set delay timer to V%X (0x%02X)\n",
+                                chip8->inst.X, chip8->V[chip8->inst.X]);
+                    break;
+
+                case 0x18:
+                    // 0xFX18: Sets sound timer to VX
+                    chip8->sound_timer = chip8->V[chip8->inst.X];
+
+                    DEBUG_PRINT("Set sound timer to V%X (0x%02X)\n",
+                                chip8->inst.X, chip8->V[chip8->inst.X]);
+                    break;
+
+                case 0x1E:
+                    // 0xFX1E: Add VX to I: VF is uneffected
+                    chip8->I += chip8->V[chip8->inst.X];
+
+                    DEBUG_PRINT(
+                        "Add V%X (0x%02X) to I (0x%02X), RES = 0x%02X \n",
+                        chip8->inst.X, chip8->V[chip8->inst.X],
+                        (chip8->I - chip8->V[chip8->inst.X]), chip8->I);
+                    break;
+
+                case 0x29:
+                    // 0xFX29: Sets I to location of the sprite for the
+                    // character in VX
+                    chip8->I = chip8->V[chip8->inst.X] * 5;
+
+                    DEBUG_PRINT(
+                        "Set I to location of sprite in memory for character "
+                        "in V%X (0x%02X) RES = VX * 5 (0x%02X)\n",
+                        chip8->inst.X, chip8->V[chip8->inst.X],
+                        chip8->V[chip8->inst.X] * 5);
+                    break;
+
+                case 0x33:
+                    // 0xFX33: Store binary-coded decimal representation of VX,
+                    // hundreds at I, tens at I+1, ones at I+2
+                    uint8_t bcd = chip8->V[chip8->inst.X];
+                    for (int8_t i = 2; i >= 0; i--) {
+                        chip8->ram[chip8->I + i] = bcd % 10;
+                        bcd /= 10;
+                    }
+
+                    DEBUG_PRINT(
+                        "Store BCD representation of V%X (0x%02X) at memory "
+                        "from I (0x%04X)\n",
+                        chip8->inst.X, chip8->V[chip8->inst.X], chip8->I);
+                    break;
+
+                case 0x55:
+                    // 0xFX55: Stores from V0 to VX (inclusive) in memory,
+                    // starting at address I
+                    for (uint8_t i = 0; i <= chip8->inst.X; i++) {
+                        chip8->ram[chip8->I + i] = chip8->V[i];
+                    }
+
+                    DEBUG_PRINT(
+                        "Store from V0-V%X inclusive at memory from I "
+                        "(0x%04X)\n",
+                        chip8->inst.X, chip8->I);
+                    break;
+                case 0x65:
+                    // 0xFX55: Fills from V0 to VX (inclusive) with values from
+                    // memory, starting at address I
+                    for (uint8_t i = 0; i <= chip8->inst.X; i++) {
+                        chip8->V[i] = chip8->ram[chip8->I + i];
+                    }
+
+                    DEBUG_PRINT(
+                        "Fills from V0-V%X inclusive with values from memory "
+                        "starting at I (0x%04X)\n",
+                        chip8->inst.X, chip8->I);
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+
         default:
             DEBUG_PRINT("Unimplemented instruction\n");
             break;
@@ -563,6 +826,9 @@ int main(int argc, char* argv[]) {
     }
 
     clear_screen(config, sdl);
+
+    // Seed random number generator
+    srand(time(NULL));
 
     const char* rom_name = argv[1];
     if (!initialise_chip8(&chip8, rom_name)) {

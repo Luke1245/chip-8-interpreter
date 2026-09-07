@@ -293,7 +293,7 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
                 chip8->PC += 2;
             }
 
-            DEBUG_PRINT("Skip next INST if VX (V%0X) (%02X) == NN (%02X)\n",
+            DEBUG_PRINT("Skip next INST if VX (V%0X) (0x%02X) == NN (0x%02X)\n",
                         chip8->inst.X, chip8->V[chip8->inst.X], chip8->inst.NN);
             break;
 
@@ -318,7 +318,7 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
             }
 
             DEBUG_PRINT(
-                "Skip next INST if VX (V%0X) (%02X) == VY (V%0X) (%02X)\n",
+                "Skip next INST if VX (V%0X) (0x%02X) == VY (V%0X) (0x%02X)\n",
                 chip8->inst.X, chip8->V[chip8->inst.X], chip8->inst.Y,
                 chip8->V[chip8->inst.Y]);
             break;
@@ -349,7 +349,7 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
                     // 0x8XY0: Sets VX to the value of VY
                     chip8->V[chip8->inst.X] = VY;
 
-                    DEBUG_PRINT("Set V%X (%02X) to value of V%X (%02X)\n",
+                    DEBUG_PRINT("Set V%X (0x%02X) to value of V%X (0x%02X)\n",
                                 chip8->inst.X, VX, chip8->inst.Y, VY);
                     break;
 
@@ -358,7 +358,8 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
                     chip8->V[chip8->inst.X] |= VY;
 
                     DEBUG_PRINT(
-                        "Set V%X (%02X) to bitwise OR V%X (%02X): RES = %02X\n",
+                        "Set V%X (0x%02X) to bitwise OR V%X (0x%02X): RES = "
+                        "0x%02X\n",
                         chip8->inst.X, VX, chip8->inst.Y, VY,
                         chip8->V[chip8->inst.X]);
                     break;
@@ -368,8 +369,8 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
                     chip8->V[chip8->inst.X] &= VY;
 
                     DEBUG_PRINT(
-                        "Set V%X (%02X) to bitwise AND V%X (%02X): RES = "
-                        "%02X\n",
+                        "Set V%X (0x%02X) to bitwise AND V%X (0x%02X): RES = "
+                        "0x%02X\n",
                         chip8->inst.X, VX, chip8->inst.Y, VY,
                         chip8->V[chip8->inst.X]);
                     break;
@@ -394,8 +395,9 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
                     chip8->V[0xF] = flag;
 
                     DEBUG_PRINT(
-                        "Added V%X (%02X) to V%X (%02X), overflow and VF = 1 "
-                        "if RES (%02X) > 255\n",
+                        "Added V%X (0x%02X) to V%X (0x%02X), overflow and VF = "
+                        "1 "
+                        "if RES (0x%02X) > 255 (0xFF)\n",
                         chip8->inst.Y, VY, chip8->inst.X, VX,
                         chip8->V[chip8->inst.X]);
                     break;
@@ -409,8 +411,9 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
                     chip8->V[0xF] = flag;
 
                     DEBUG_PRINT(
-                        "Substracted V%X (%02X) from V%X (%02X), overflow and "
-                        "VF = 1 if V%X >= V%X, RES = %02X\n",
+                        "Substracted V%X (0x%02X) from V%X (0x%02X), overflow "
+                        "and "
+                        "VF = 1 if V%X >= V%X, RES = 0x%02X\n",
                         chip8->inst.Y, VY, chip8->inst.X, VX, chip8->inst.X,
                         chip8->inst.Y, chip8->V[chip8->inst.X]);
                     break;
@@ -454,8 +457,8 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
                     chip8->V[0xF] = msb;
 
                     DEBUG_PRINT(
-                        "Shift V%X (%02X) left by 1, set VF if MSB (%X) is "
-                        "set, unset if 0, RES: %02X\n",
+                        "Shift V%X (0x%02X) left by 1, set VF if MSB (0x%X) is "
+                        "set, unset if 0, RES: 0x%02X\n",
                         chip8->inst.X, VX, msb, chip8->V[chip8->inst.X]);
                     break;
 
@@ -464,12 +467,33 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
             }
             break;
 
-        case 0x00A:
+        case 0x009:
+            // 0x9XY0: Skip next instruction if VX != VY
 
+            if (chip8->V[chip8->inst.X] != chip8->V[chip8->inst.Y]) {
+                chip8->PC += 2;
+            }
+
+            DEBUG_PRINT(
+                "Skip next instruction if V%X (0x%02X) != V%X (0x%02X)\n",
+                chip8->inst.X, chip8->V[chip8->inst.X], chip8->inst.Y,
+                chip8->V[chip8->inst.Y]);
+            break;
+
+        case 0x00A:
             // 0xANNN: Set I to NNN
             chip8->I = chip8->inst.NNN;
 
-            DEBUG_PRINT("Set I to %04X\n", chip8->I);
+            DEBUG_PRINT("Set I to 0x%04X\n", chip8->I);
+            break;
+
+        case 0x00B:
+            // 0xBNNN: Jump to address NNN + V0
+            chip8->PC = chip8->inst.NNN + chip8->V[0x0];
+
+            DEBUG_PRINT(
+                "Jump to address NNN (0x%04X) + V0 (0x%02X): RES = 0x%0X\n",
+                chip8->inst.NNN, chip8->V[0x0], chip8->PC);
             break;
 
         case 0x00D:

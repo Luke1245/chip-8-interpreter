@@ -73,7 +73,7 @@ bool initialise_chip8(chip8_t* chip8, const char* rom_name) {
     return true;
 }
 
-void emulate_instruction(chip8_t* chip8, const config_t config) {
+void emulate_instruction(chip8_t* chip8, const config_t* config) {
     // Combine two opcode RAM bytes into single value
     chip8->inst.opcode =
         (chip8->ram[chip8->PC] << 8) | (chip8->ram[chip8->PC + 1]);
@@ -347,8 +347,8 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
         case 0x00D:
             // 0xDXYN: Draws a sprite at coord (VX, VY).
             //  Sprite has a width of 8 pixels and a height of N pixels
-            uint8_t X_coord = chip8->V[chip8->inst.X] % config.window_width;
-            uint8_t Y_coord = chip8->V[chip8->inst.Y] % config.window_height;
+            uint8_t X_coord = chip8->V[chip8->inst.X] % config->window_width;
+            uint8_t Y_coord = chip8->V[chip8->inst.Y] % config->window_height;
             const uint8_t X_origin = X_coord;
 
             chip8->V[0xF] = 0;  // Init carry flag

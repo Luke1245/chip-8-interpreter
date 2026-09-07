@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    clear_screen(config, sdl);
+    clear_screen(&config, &sdl);
 
     // Seed random number generator
     srand(time(NULL));
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
 
         // Emulate instructions for given frame (60hz)
         for (uint32_t i = 0; i < config.clock_rate / 60; i++) {
-            emulate_instruction(&chip8, config);
+            emulate_instruction(&chip8, &config);
         }
 
         // Fetch time after executing instructions
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
         // Delay for approx 60hz, or actual time elapsed
         SDL_Delay(16.67f > elapsed_time ? 16.67f - elapsed_time : 0);
 
-        update_screen(sdl, config, chip8);
+        update_screen(&sdl, &config, &chip8);
         update_timers(&chip8);
     }
 

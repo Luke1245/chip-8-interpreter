@@ -38,50 +38,50 @@ void exit_cleanup(sdl_t* sdl) {
     SDL_Quit();
 }
 
-void clear_screen(const config_t config, const sdl_t sdl) {
+void clear_screen(const config_t* config, const sdl_t* sdl) {
     // Bit shifts and masks to extract relevant channels from 32-bit config
     // integer
-    const uint8_t r = (config.bg_colour >> 24) & 0xFF;
-    const uint8_t g = (config.bg_colour >> 16) & 0xFF;
-    const uint8_t b = (config.bg_colour >> 8) & 0xFF;
+    const uint8_t r = (config->bg_colour >> 24) & 0xFF;
+    const uint8_t g = (config->bg_colour >> 16) & 0xFF;
+    const uint8_t b = (config->bg_colour >> 8) & 0xFF;
     // Shift not needed but keeps consistent with style
-    const uint8_t a = (config.bg_colour >> 0) & 0xFF;
+    const uint8_t a = (config->bg_colour >> 0) & 0xFF;
 
-    SDL_SetRenderDrawColor(sdl.renderer, r, g, b, a);
-    SDL_RenderClear(sdl.renderer);
+    SDL_SetRenderDrawColor(sdl->renderer, r, g, b, a);
+    SDL_RenderClear(sdl->renderer);
 }
 
-void update_screen(const sdl_t sdl, const config_t config,
-                   const chip8_t chip8) {
+void update_screen(const sdl_t* sdl, const config_t* config,
+                   const chip8_t* chip8) {
     SDL_FRect rect = {
-        .x = 0, .y = 0, .w = config.scale_factor, .h = config.scale_factor};
+        .x = 0, .y = 0, .w = config->scale_factor, .h = config->scale_factor};
 
-    const uint8_t fg_r = (config.fg_colour >> 24) & 0xFF;
-    const uint8_t fg_g = (config.fg_colour >> 16) & 0xFF;
-    const uint8_t fg_b = (config.fg_colour >> 8) & 0xFF;
-    const uint8_t fg_a = (config.fg_colour >> 0) & 0xFF;
+    const uint8_t fg_r = (config->fg_colour >> 24) & 0xFF;
+    const uint8_t fg_g = (config->fg_colour >> 16) & 0xFF;
+    const uint8_t fg_b = (config->fg_colour >> 8) & 0xFF;
+    const uint8_t fg_a = (config->fg_colour >> 0) & 0xFF;
 
-    const uint8_t bg_r = (config.bg_colour >> 24) & 0xFF;
-    const uint8_t bg_g = (config.bg_colour >> 16) & 0xFF;
-    const uint8_t bg_b = (config.bg_colour >> 8) & 0xFF;
-    const uint8_t bg_a = (config.bg_colour >> 0) & 0xFF;
+    const uint8_t bg_r = (config->bg_colour >> 24) & 0xFF;
+    const uint8_t bg_g = (config->bg_colour >> 16) & 0xFF;
+    const uint8_t bg_b = (config->bg_colour >> 8) & 0xFF;
+    const uint8_t bg_a = (config->bg_colour >> 0) & 0xFF;
 
-    for (uint32_t i = 0; i < sizeof(chip8.display); i++) {
-        rect.x = (i % config.window_width) * config.scale_factor;
-        rect.y = (i / config.window_width) * config.scale_factor;
+    for (uint32_t i = 0; i < sizeof(chip8->display); i++) {
+        rect.x = (i % config->window_width) * config->scale_factor;
+        rect.y = (i / config->window_width) * config->scale_factor;
 
-        if (chip8.display[i]) {
+        if (chip8->display[i]) {
             // Pixel is on: draw foreground colour
-            SDL_SetRenderDrawColor(sdl.renderer, fg_r, fg_g, fg_b, fg_a);
-            SDL_RenderFillRect(sdl.renderer, &rect);
+            SDL_SetRenderDrawColor(sdl->renderer, fg_r, fg_g, fg_b, fg_a);
+            SDL_RenderFillRect(sdl->renderer, &rect);
         } else {
             // Pixel is off: draw background colour
-            SDL_SetRenderDrawColor(sdl.renderer, bg_r, bg_g, bg_b, bg_a);
-            SDL_RenderFillRect(sdl.renderer, &rect);
+            SDL_SetRenderDrawColor(sdl->renderer, bg_r, bg_g, bg_b, bg_a);
+            SDL_RenderFillRect(sdl->renderer, &rect);
         }
     }
 
-    SDL_RenderPresent(sdl.renderer);
+    SDL_RenderPresent(sdl->renderer);
 }
 
 void handle_input(chip8_t* chip8) {

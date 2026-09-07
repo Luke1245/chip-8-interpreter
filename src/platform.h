@@ -13,8 +13,8 @@ typedef struct {
 
 bool initialise_sdl(sdl_t* sdl, config_t config);
 void exit_cleanup(sdl_t* sdl);
-void clear_screen(const config_t config, const sdl_t sdl);
-void update_screen(const sdl_t sdl, const config_t config, const chip8_t chip8);
+void clear_screen(const config_t* config, const sdl_t* sdl);
+void update_screen(const sdl_t* sdl, const config_t* config, const chip8_t* chip8);
 void handle_input(chip8_t* chip8);
 
 #endif

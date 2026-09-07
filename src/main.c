@@ -227,6 +227,7 @@ void handle_input(chip8_t* chip8) {
                     default:
                         break;
                 }
+                break;
 
             case SDL_EVENT_KEY_UP:
                 break;
@@ -336,6 +337,131 @@ void emulate_instruction(chip8_t* chip8, const config_t config) {
 
             DEBUG_PRINT("V%X += 0x%02X, RES: 0x%02X\n", chip8->inst.X,
                         chip8->inst.NN, chip8->V[chip8->inst.X]);
+            break;
+
+        case 0x008:
+            const uint8_t VX = chip8->V[chip8->inst.X];
+            const uint8_t VY = chip8->V[chip8->inst.Y];
+            bool flag;
+
+            switch (chip8->inst.N) {
+                case 0x0:
+                    // 0x8XY0: Sets VX to the value of VY
+                    chip8->V[chip8->inst.X] = VY;
+
+                    DEBUG_PRINT("Set V%X (%02X) to value of V%X (%02X)\n",
+                                chip8->inst.X, VX, chip8->inst.Y, VY);
+                    break;
+
+                case 0x1:
+                    // 0x8XY1: Sets VX to VX bitwise OR VY
+                    chip8->V[chip8->inst.X] |= VY;
+
+                    DEBUG_PRINT(
+                        "Set V%X (%02X) to bitwise OR V%X (%02X): RES = %02X\n",
+                        chip8->inst.X, VX, chip8->inst.Y, VY,
+                        chip8->V[chip8->inst.X]);
+                    break;
+
+                case 0x2:
+                    // 0x8XY2: Sets VX to VX bitwise AND VY
+                    chip8->V[chip8->inst.X] &= VY;
+
+                    DEBUG_PRINT(
+                        "Set V%X (%02X) to bitwise AND V%X (%02X): RES = "
+                        "%02X\n",
+                        chip8->inst.X, VX, chip8->inst.Y, VY,
+                        chip8->V[chip8->inst.X]);
+                    break;
+
+                case 0x3:
+                    // 0x8XY3: Sets VX to VX bitwise XOR VY
+                    chip8->V[chip8->inst.X] ^= VY;
+
+                    DEBUG_PRINT(
+                        "Set V%X (%02X) to bitwise XOR V%X (%02X): RES = "
+                        "%02X\n",
+                        chip8->inst.X, VX, chip8->inst.Y, VY,
+                        chip8->V[chip8->inst.X]);
+                    break;
+
+                case 0x4:
+                    // 0x8XY4: Adds VY to VX: VF set to 1 when overflow and 0
+                    // when not
+                    flag = (VX + VY) > 0xFF;
+
+                    chip8->V[chip8->inst.X] += VY;
+                    chip8->V[0xF] = flag;
+
+                    DEBUG_PRINT(
+                        "Added V%X (%02X) to V%X (%02X), overflow and VF = 1 "
+                        "if RES (%02X) > 255\n",
+                        chip8->inst.Y, VY, chip8->inst.X, VX,
+                        chip8->V[chip8->inst.X]);
+                    break;
+
+                case 0x5:
+                    // 0x8XY5: Subtract VY from VX: VF set to 0 when underflow
+                    // and 1 when not
+                    flag = VX >= VY;
+
+                    chip8->V[chip8->inst.X] -= VY;
+                    chip8->V[0xF] = flag;
+
+                    DEBUG_PRINT(
+                        "Substracted V%X (%02X) from V%X (%02X), overflow and "
+                        "VF = 1 if V%X >= V%X, RES = %02X\n",
+                        chip8->inst.Y, VY, chip8->inst.X, VX, chip8->inst.X,
+                        chip8->inst.Y, chip8->V[chip8->inst.X]);
+                    break;
+
+                case 0x6:
+                    // 0x8XY6: Shift VX to right by 1, store LSB of VX before
+                    // shift in VF Mask off top 7 bits
+                    uint8_t lsb = VX & 0x01;
+
+                    chip8->V[chip8->inst.X] >>= 1;
+                    chip8->V[0xF] = lsb;
+
+                    DEBUG_PRINT(
+                        "Shift V%X (%02X) right by 1, set VF = LSB of VX pre "
+                        "shift (%X), RES = %02X\n",
+                        chip8->inst.X, VX, lsb, chip8->V[chip8->inst.X]);
+                    break;
+
+                case 0x7:
+                    // 0x8XY7: Sets VX to VY - VX. VF unset if underflow, set if
+                    // not
+                    flag = VY >= VX;
+
+                    chip8->V[chip8->inst.X] = VY - VX;
+                    chip8->V[0xF] = flag;
+
+                    DEBUG_PRINT(
+                        "Set V%X to V%X (%02X) - V%X (%02X), set VF if VY >= "
+                        "VX, RES: %02X, VF: %02X\n",
+                        chip8->inst.X, chip8->inst.Y, VY, chip8->inst.X, VX,
+                        chip8->V[chip8->inst.X], chip8->V[0xF]);
+                    break;
+
+                case 0xE:
+                    // 0x8XYE: Shift VX to left by 1, set VF if MSB if set,
+                    // unset if MSB is unset Shift MSB to LSB, mask off top 7
+                    // bits (avoids extra conditional code for setting VF)
+                    uint8_t msb = (VX >> 7) & 0x01;
+
+                    chip8->V[chip8->inst.X] <<= 1;
+                    chip8->V[0xF] = msb;
+
+                    DEBUG_PRINT(
+                        "Shift V%X (%02X) left by 1, set VF if MSB (%X) is "
+                        "set, unset if 0, RES: %02X\n",
+                        chip8->inst.X, VX, msb, chip8->V[chip8->inst.X]);
+                    break;
+
+                default:
+                    DEBUG_PRINT("Incorrect opcode\n");
+            }
             break;
 
         case 0x00A:

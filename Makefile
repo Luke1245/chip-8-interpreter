@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -std=c23 -Wall -Wextra -Werror $(shell pkg-config --cflags sdl3)
+CFLAGS := -std=c23 -Wimplicit-fallthrough -Wall -Wextra -Werror $(shell pkg-config --cflags sdl3)
 LDFLAGS := $(shell pkg-config --libs sdl3)
 
 SRC_DIR := src

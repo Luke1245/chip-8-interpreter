@@ -5,8 +5,6 @@
 
 #include "config.h"
 
-typedef struct sdl sdl_t;
-
 typedef enum machine_state_type { RUNNING, PAUSED, QUIT } machine_state_t;
 
 typedef struct {

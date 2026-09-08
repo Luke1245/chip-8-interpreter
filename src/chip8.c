@@ -1,5 +1,4 @@
 #include "chip8.h"
-#include "platform.h"
 
 #include <SDL3/SDL.h>
 #include <stdbool.h>

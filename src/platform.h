@@ -5,8 +5,7 @@
 #include <stdbool.h>
 
 #include "config.h"
-
-typedef struct chip8 chip8_t;
+#include "chip8.h"
 
 typedef struct sdl {
     SDL_Window* window;

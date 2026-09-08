@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
 #include "debug.h"
 
 bool initialise_chip8(chip8_t* chip8, const char* rom_name) {
@@ -193,6 +194,10 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                 case 0x1:
                     // 0x8XY1: Sets VX to VX bitwise OR VY
                     chip8->V[chip8->inst.X] |= VY;
+                    if (config->extension == CHIP8) {
+                        // Original CHIP-8 spec resets the flag register to zero
+                        chip8->V[0xF] = 0x0;
+                    }
 
                     DEBUG_PRINT(
                         "Set V%X (0x%02X) to bitwise OR V%X (0x%02X): RES = "
@@ -204,6 +209,10 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                 case 0x2:
                     // 0x8XY2: Sets VX to VX bitwise AND VY
                     chip8->V[chip8->inst.X] &= VY;
+                    if (config->extension == CHIP8) {
+                        // Original CHIP-8 spec resets the flag register to zero
+                        chip8->V[0xF] = 0x0;
+                    }
 
                     DEBUG_PRINT(
                         "Set V%X (0x%02X) to bitwise AND V%X (0x%02X): RES = "
@@ -215,6 +224,10 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                 case 0x3:
                     // 0x8XY3: Sets VX to VX bitwise XOR VY
                     chip8->V[chip8->inst.X] ^= VY;
+                    if (config->extension == CHIP8) {
+                        // Original CHIP-8 spec resets the flag register to zero
+                        chip8->V[0xF] = 0x0;
+                    }
 
                     DEBUG_PRINT(
                         "Set V%X (%02X) to bitwise XOR V%X (%02X): RES = "
@@ -258,6 +271,10 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                 case 0x6:
                     // 0x8XY6: Shift VX to right by 1, store LSB of VX before
                     // shift in VF Mask off top 7 bits
+                    if (config->extension != SUPERCHIP) {
+                        // Set VX to value of VY on CHIP-8 and XO-CHIP
+                        chip8->V[chip8->inst.X] = chip8->V[chip8->inst.Y];
+                    }
                     uint8_t lsb = VX & 0x01;
 
                     chip8->V[chip8->inst.X] >>= 1;
@@ -288,6 +305,10 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                     // 0x8XYE: Shift VX to left by 1, set VF if MSB if set,
                     // unset if MSB is unset Shift MSB to LSB, mask off top 7
                     // bits (avoids extra conditional code for setting VF)
+                    if (config->extension != SUPERCHIP) {
+                        // Set VX to value of VY on CHIP-8 and XO-CHIP
+                        chip8->V[chip8->inst.X] = chip8->V[chip8->inst.Y];
+                    }
                     uint8_t msb = (VX >> 7) & 0x01;
 
                     chip8->V[chip8->inst.X] <<= 1;
@@ -326,7 +347,13 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
 
         case 0x00B:
             // 0xBNNN: Jump to address NNN + V0
-            chip8->PC = chip8->inst.NNN + chip8->V[0x0];
+            if (config->extension != SUPERCHIP) {
+                chip8->PC = chip8->inst.NNN + chip8->V[0x0];
+            } else {
+                // SUPER-CHIP specific behaviour
+                // 0xBXNN: Jump to address XNN + V[X]
+                chip8->PC = chip8->inst.NNN + chip8->V[chip8->inst.X];
+            }
 
             DEBUG_PRINT(
                 "Jump to address NNN (0x%04X) + V0 (0x%02X): RES = 0x%0X\n",
@@ -499,7 +526,12 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                     // 0xFX55: Stores from V0 to VX (inclusive) in memory,
                     // starting at address I
                     for (uint8_t i = 0; i <= chip8->inst.X; i++) {
-                        chip8->ram[chip8->I + i] = chip8->V[i];
+                        if (config->extension != SUPERCHIP) {
+                            chip8->ram[chip8->I] = chip8->V[i];
+                            chip8->I++;
+                        } else {
+                            chip8->ram[chip8->I + i] = chip8->V[i];
+                        }
                     }
 
                     DEBUG_PRINT(
@@ -511,7 +543,12 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                     // 0xFX55: Fills from V0 to VX (inclusive) with values from
                     // memory, starting at address I
                     for (uint8_t i = 0; i <= chip8->inst.X; i++) {
-                        chip8->V[i] = chip8->ram[chip8->I + i];
+                        if (config->extension != SUPERCHIP) {
+                            chip8->V[i] = chip8->ram[chip8->I];
+                            chip8->I++;
+                        } else {
+                            chip8->V[i] = chip8->ram[chip8->I + i];
+                        }
                     }
 
                     DEBUG_PRINT(

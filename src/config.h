@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+typedef enum extension_type { CHIP8, SUPERCHIP, XOCHIP } extension_t;
+
 typedef struct {
     uint32_t window_width;
     uint32_t window_height;
@@ -14,6 +16,7 @@ typedef struct {
     uint32_t clock_rate;        // CPU hz
     uint32_t square_wave_freq;  // Frequency of the square wave
     int16_t volume;
+    extension_t extension;
 } config_t;
 
 bool set_config(config_t* config, int argc, char* argv[]);

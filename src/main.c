@@ -52,8 +52,15 @@ int main(int argc, char* argv[]) {
         const uint64_t start_time = SDL_GetPerformanceCounter();
 
         // Emulate instructions for given frame (60hz)
-        for (uint32_t i = 0; i < config.clock_rate / 60; i++) {
-            emulate_instruction(&chip8, &config);
+        if (config.extension == CHIP8) {
+            // On original CHIP-8, limits speed to max 60 sprites per second
+            for (uint32_t i = 0; i < 8; i++) {
+                emulate_instruction(&chip8, &config);
+            }
+        } else {
+            for (uint32_t i = 0; i < config.clock_rate / 60; i++) {
+                emulate_instruction(&chip8, &config);
+            }
         }
 
         // Fetch time after executing instructions

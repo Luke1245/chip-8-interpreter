@@ -16,7 +16,7 @@ typedef struct {
     uint8_t Y;        // 4-bit (originally) register identifier
 } instruction_t;
 
-typedef struct {
+typedef struct chip8 {
     machine_state_t state;
     uint8_t ram[4096];
     uint8_t V[16];       // Data registers V0-VF
@@ -34,6 +34,6 @@ typedef struct {
 
 bool initialise_chip8(chip8_t* chip8, const char* rom_name);
 void emulate_instruction(chip8_t* chip8, const config_t* config);
-void update_timers(chip8_t* chip8);
+bool update_timers(chip8_t* chip8);
 
 #endif

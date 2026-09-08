@@ -66,7 +66,8 @@ int main(int argc, char* argv[]) {
         SDL_Delay(16.67f > elapsed_time ? 16.67f - elapsed_time : 0);
 
         update_screen(&sdl, &config, &chip8);
-        update_timers(&chip8);
+        const bool playing = update_timers(&chip8);
+        play_audio(&sdl, &config, playing);
     }
 
     exit_cleanup(&sdl);

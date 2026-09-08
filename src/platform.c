@@ -28,6 +28,25 @@ bool initialise_sdl(sdl_t* sdl, config_t config) {
         return false;
     }
 
+    // Pick system default playback device for stream
+    // SDL3 uses logical devices, so this will adapt to new devices
+    sdl->audio_spec = (SDL_AudioSpec){
+        .format = SDL_AUDIO_S16,  // Signed 16 bit
+        .channels = 1,
+        .freq = 44100,  // 44100 Hz
+    };
+    // start of wave
+    sdl->sample_index = 0;
+
+    sdl->audio_stream = SDL_OpenAudioDeviceStream(
+        SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &sdl->audio_spec, NULL, NULL);
+    if (!sdl->audio_stream) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "Failure to open audio device stream %s\n",
+                     SDL_GetError());
+        return false;
+    }
+
     return true;
 }
 
@@ -35,6 +54,7 @@ void exit_cleanup(sdl_t* sdl) {
     // Renderer must be destroyed before window
     SDL_DestroyRenderer(sdl->renderer);
     SDL_DestroyWindow(sdl->window);
+    SDL_DestroyAudioStream(sdl->audio_stream);
     SDL_Quit();
 }
 
@@ -229,4 +249,41 @@ void handle_input(chip8_t* chip8) {
                 break;
         }
     }
+}
+
+void play_audio(sdl_t* sdl, const config_t* config, bool playing) {
+    if (!playing) {
+        SDL_PauseAudioStreamDevice(sdl->audio_stream);
+        SDL_ClearAudioStream(sdl->audio_stream);
+        // Reset for fresh wave
+        sdl->sample_index = 0;
+        return;
+    }
+
+    const int sample_rate = sdl->audio_spec.freq;
+
+    // Wave spends half samples hi have samples lo
+    const uint64_t period = sample_rate / config->square_wave_freq;
+    const uint64_t half_period = period / 2;
+
+    // Keep roughly 2 frames in queue
+    const int samples_per_frame = sample_rate / 60;
+    const int target_samples = samples_per_frame * 2;
+    // SDL expects data in bytes not samples
+    const int target_bytes = target_samples * (int)sizeof(int16_t);
+
+    // While there is less data in the stream than the target
+    while (SDL_GetAudioStreamQueued(sdl->audio_stream) < target_bytes) {
+        int16_t chunk[512];
+
+        for (int i = 0; i < 512; i++) {
+            const bool high = (sdl->sample_index / half_period) % 2;
+            sdl->sample_index++;
+            chunk[i] = high ? config->volume : -config->volume;
+        }
+
+        SDL_PutAudioStreamData(sdl->audio_stream, chunk, sizeof(chunk));
+    }
+
+    SDL_ResumeAudioStreamDevice(sdl->audio_stream);
 }

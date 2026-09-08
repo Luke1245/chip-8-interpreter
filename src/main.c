@@ -14,14 +14,9 @@ int main(int argc, char* argv[]) {
     config_t config = {0};
     chip8_t chip8 = {0};
 
-    // TODO: Move CLI args handling to config.c
-    if (argc < 2) {
-        fprintf(stderr, "Usage %s <rom_name>\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
     // Ensure that config is correctly set
-    if (!set_config(&config, argc, argv)) {
+    char* rom_name = NULL;
+    if (!set_config(&config, argc, argv, &rom_name)) {
         exit(EXIT_FAILURE);
     }
 
@@ -35,7 +30,6 @@ int main(int argc, char* argv[]) {
     // Seed random number generator
     srand(time(NULL));
 
-    const char* rom_name = argv[1];
     if (!initialise_chip8(&chip8, rom_name)) {
         exit(EXIT_FAILURE);
     }

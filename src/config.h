@@ -19,6 +19,6 @@ typedef struct {
     extension_t extension;
 } config_t;
 
-bool set_config(config_t* config, int argc, char* argv[]);
+bool set_config(config_t* config, int argc, char* argv[], char** rom_name);
 
 #endif

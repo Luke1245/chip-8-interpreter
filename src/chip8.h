@@ -36,6 +36,6 @@ typedef struct chip8 {
 
 bool initialise_chip8(chip8_t* chip8, const char* rom_name);
 void emulate_instruction(chip8_t* chip8, const config_t* config);
-void update_timers(chip8_t* chip8);
+bool update_timers(chip8_t* chip8);
 
 #endif

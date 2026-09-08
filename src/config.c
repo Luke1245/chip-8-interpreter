@@ -14,6 +14,8 @@ bool set_config(config_t* config, int argc, char* argv[]) {
         .bg_colour = 0x000000FF,  // RGBA8888
         .scale_factor = 20,
         .clock_rate = 700,  // Number of instructions to emulate per second
+        .square_wave_freq = 440,   // 440hz for middle A
+        .volume = 3000,
     };
 
     // TODO: Implement command line arguments

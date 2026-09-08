@@ -13,6 +13,7 @@ typedef struct sdl {
     SDL_Renderer* renderer;
     SDL_AudioSpec audio_spec;
     SDL_AudioStream* audio_stream;
+    uint64_t sample_index; // current square wave phase, needed to persist between frames
 } sdl_t;
 
 bool initialise_sdl(sdl_t* sdl, config_t config);

@@ -104,7 +104,7 @@ void update_screen(const sdl_t* sdl, const config_t* config,
     SDL_RenderPresent(sdl->renderer);
 }
 
-void handle_input(chip8_t* chip8) {
+void handle_input(chip8_t* chip8, config_t* config) {
     SDL_Event event;
 
     while (SDL_PollEvent(&event)) {
@@ -128,6 +128,20 @@ void handle_input(chip8_t* chip8) {
                             chip8->state = RUNNING;  // Resume
                         }
                         return;
+
+                    case SDL_SCANCODE_O:
+                        // Decrease volume
+                        if (config->volume > 0) {
+                            config->volume -= 500;
+                        }
+                        break;
+
+                    case SDL_SCANCODE_P:
+                        // Increase volume
+                        if (config->volume < INT16_MAX) {
+                            config->volume += 500;
+                        }
+                        break;
 
                     case SDL_SCANCODE_1:
                         chip8->keyboard[0x1] = true;

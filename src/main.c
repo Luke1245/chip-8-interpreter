@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     while (chip8.state != QUIT) {
         // Allow user to quit window
         // Delay for 60hz (approx)
-        handle_input(&chip8);
+        handle_input(&chip8, &config);
 
         if (chip8.state == PAUSED) continue;
 

@@ -16,6 +16,7 @@ bool set_config(config_t* config, int argc, char* argv[]) {
         .clock_rate = 700,  // Number of instructions to emulate per second
         .square_wave_freq = 440,  // 440hz for middle A
         .volume = 3000,
+        .extension = CHIP8,  // Current CHIP-8 extension for opcode quirks
     };
 
     // TODO: Implement command line arguments

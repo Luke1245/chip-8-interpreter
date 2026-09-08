@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
 #include "debug.h"
 
 bool initialise_chip8(chip8_t* chip8, const char* rom_name) {
@@ -511,7 +512,12 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                     // 0xFX55: Stores from V0 to VX (inclusive) in memory,
                     // starting at address I
                     for (uint8_t i = 0; i <= chip8->inst.X; i++) {
-                        chip8->ram[chip8->I + i] = chip8->V[i];
+                        if (config->extension != SUPERCHIP) {
+                            chip8->ram[chip8->I] = chip8->V[i];
+                            chip8->I++;
+                        } else {
+                            chip8->ram[chip8->I + i] = chip8->V[i];
+                        }
                     }
 
                     DEBUG_PRINT(
@@ -523,7 +529,12 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                     // 0xFX55: Fills from V0 to VX (inclusive) with values from
                     // memory, starting at address I
                     for (uint8_t i = 0; i <= chip8->inst.X; i++) {
-                        chip8->V[i] = chip8->ram[chip8->I + i];
+                        if (config->extension != SUPERCHIP) {
+                            chip8->V[i] = chip8->ram[chip8->I];
+                            chip8->I++;
+                        } else {
+                            chip8->V[i] = chip8->ram[chip8->I + i];
+                        }
                     }
 
                     DEBUG_PRINT(

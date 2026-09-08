@@ -4,8 +4,8 @@
 #include <SDL3/SDL.h>
 #include <stdbool.h>
 
-#include "config.h"
 #include "chip8.h"
+#include "config.h"
 
 typedef struct sdl {
     SDL_Window* window;

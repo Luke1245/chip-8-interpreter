@@ -251,7 +251,7 @@ void handle_input(chip8_t* chip8) {
     }
 }
 
-void play_audio(sdl_t *sdl, const config_t* config, bool playing) {
+void play_audio(sdl_t* sdl, const config_t* config, bool playing) {
     if (!playing) {
         SDL_PauseAudioStreamDevice(sdl->audio_stream);
         SDL_ClearAudioStream(sdl->audio_stream);
@@ -270,7 +270,7 @@ void play_audio(sdl_t *sdl, const config_t* config, bool playing) {
     const int samples_per_frame = sample_rate / 60;
     const int target_samples = samples_per_frame * 2;
     // SDL expects data in bytes not samples
-    const int target_bytes = target_samples * (int) sizeof (int16_t);
+    const int target_bytes = target_samples * (int)sizeof(int16_t);
 
     // While there is less data in the stream than the target
     while (SDL_GetAudioStreamQueued(sdl->audio_stream) < target_bytes) {

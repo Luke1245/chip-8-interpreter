@@ -193,8 +193,10 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                 case 0x1:
                     // 0x8XY1: Sets VX to VX bitwise OR VY
                     chip8->V[chip8->inst.X] |= VY;
-                    // Original CHIP-8 spec resets the flag register to zero
-                    chip8->V[0xF] = 0x0;
+                    if (config->extension == CHIP8) {
+                        // Original CHIP-8 spec resets the flag register to zero
+                        chip8->V[0xF] = 0x0;
+                    }
 
                     DEBUG_PRINT(
                         "Set V%X (0x%02X) to bitwise OR V%X (0x%02X): RES = "
@@ -206,8 +208,10 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                 case 0x2:
                     // 0x8XY2: Sets VX to VX bitwise AND VY
                     chip8->V[chip8->inst.X] &= VY;
-                    // Original CHIP-8 spec resets the flag register to zero
-                    chip8->V[0xF] = 0x0;
+                    if (config->extension == CHIP8) {
+                        // Original CHIP-8 spec resets the flag register to zero
+                        chip8->V[0xF] = 0x0;
+                    }
 
                     DEBUG_PRINT(
                         "Set V%X (0x%02X) to bitwise AND V%X (0x%02X): RES = "
@@ -219,8 +223,10 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                 case 0x3:
                     // 0x8XY3: Sets VX to VX bitwise XOR VY
                     chip8->V[chip8->inst.X] ^= VY;
-                    // Original CHIP-8 spec resets the flag register to zero
-                    chip8->V[0xF] = 0x0;
+                    if (config->extension == CHIP8) {
+                        // Original CHIP-8 spec resets the flag register to zero
+                        chip8->V[0xF] = 0x0;
+                    }
 
                     DEBUG_PRINT(
                         "Set V%X (%02X) to bitwise XOR V%X (%02X): RES = "

@@ -9,6 +9,8 @@
 typedef struct {
     SDL_Window* window;
     SDL_Renderer* renderer;
+    SDL_AudioSpec audio_spec;
+    SDL_AudioStream* audio_stream;
 } sdl_t;
 
 bool initialise_sdl(sdl_t* sdl, config_t config);

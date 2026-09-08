@@ -28,6 +28,23 @@ bool initialise_sdl(sdl_t* sdl, config_t config) {
         return false;
     }
 
+    // Pick system default playback device for stream
+    // SDL3 uses logical devices, so this will adapt to new devices
+    sdl->audio_spec = (SDL_AudioSpec){
+        .format = SDL_AUDIO_S16,  // Signed 16 bit
+        .channels = 1,
+        .freq = 44100,  // 44100 Hz
+    };
+
+    sdl->audio_stream = SDL_OpenAudioDeviceStream(
+        SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &sdl->audio_spec, NULL, NULL);
+    if (!sdl->audio_stream) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                     "Failure to open audio device stream %s\n",
+                     SDL_GetError());
+        return false;
+    }
+
     return true;
 }
 
@@ -35,6 +52,7 @@ void exit_cleanup(sdl_t* sdl) {
     // Renderer must be destroyed before window
     SDL_DestroyRenderer(sdl->renderer);
     SDL_DestroyWindow(sdl->window);
+    SDL_DestroyAudioStream(sdl->audio_stream);
     SDL_Quit();
 }
 

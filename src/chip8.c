@@ -347,7 +347,13 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
 
         case 0x00B:
             // 0xBNNN: Jump to address NNN + V0
-            chip8->PC = chip8->inst.NNN + chip8->V[0x0];
+            if (config->extension != SUPERCHIP) {
+                chip8->PC = chip8->inst.NNN + chip8->V[0x0];
+            } else {
+                // SUPER-CHIP specific behaviour
+                // 0xBXNN: Jump to address XNN + V[X]
+                chip8->PC = chip8->inst.NNN + chip8->V[chip8->inst.X];
+            }
 
             DEBUG_PRINT(
                 "Jump to address NNN (0x%04X) + V0 (0x%02X): RES = 0x%0X\n",

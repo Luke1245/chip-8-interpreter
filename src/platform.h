@@ -2,11 +2,13 @@
 #define PLATFORM_H
 
 #include <SDL3/SDL.h>
+#include <stdbool.h>
 
-#include "chip8.h"
 #include "config.h"
 
-typedef struct {
+typedef struct chip8 chip8_t;
+
+typedef struct sdl {
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_AudioSpec audio_spec;

@@ -5,6 +5,8 @@
 
 #include "config.h"
 
+typedef struct sdl sdl_t;
+
 typedef enum machine_state_type { RUNNING, PAUSED, QUIT } machine_state_t;
 
 typedef struct {
@@ -16,7 +18,7 @@ typedef struct {
     uint8_t Y;        // 4-bit (originally) register identifier
 } instruction_t;
 
-typedef struct {
+typedef struct chip8 {
     machine_state_t state;
     uint8_t ram[4096];
     uint8_t V[16];       // Data registers V0-VF

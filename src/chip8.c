@@ -271,6 +271,10 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                 case 0x6:
                     // 0x8XY6: Shift VX to right by 1, store LSB of VX before
                     // shift in VF Mask off top 7 bits
+                    if (config->extension != SUPERCHIP) {
+                        // Set VX to value of VY on CHIP-8 and XO-CHIP
+                        chip8->V[chip8->inst.X] = chip8->V[chip8->inst.Y];
+                    }
                     uint8_t lsb = VX & 0x01;
 
                     chip8->V[chip8->inst.X] >>= 1;
@@ -301,6 +305,10 @@ void emulate_instruction(chip8_t* chip8, const config_t* config) {
                     // 0x8XYE: Shift VX to left by 1, set VF if MSB if set,
                     // unset if MSB is unset Shift MSB to LSB, mask off top 7
                     // bits (avoids extra conditional code for setting VF)
+                    if (config->extension != SUPERCHIP) {
+                        // Set VX to value of VY on CHIP-8 and XO-CHIP
+                        chip8->V[chip8->inst.X] = chip8->V[chip8->inst.Y];
+                    }
                     uint8_t msb = (VX >> 7) & 0x01;
 
                     chip8->V[chip8->inst.X] <<= 1;

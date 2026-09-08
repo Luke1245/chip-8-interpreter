@@ -33,6 +33,8 @@ bool set_config(config_t* config, int argc, char* argv[], char** rom_name) {
     while ((opt = getopt(argc - 1, argv + 1, "s:e:")) != -1) {
         switch (opt) {
             case 's':
+                // Convert string argument to uint32_t for scale_factor
+                config->scale_factor = (uint32_t) strtol(optarg, NULL, 10);
                 break;
             case 'e':
                 if (strcmp("CHIP8", optarg) == 0) {

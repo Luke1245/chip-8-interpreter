@@ -15,6 +15,26 @@ CHIP-8 is an interpreted programming language from the 1970s. Initially used for
 - Hexadecimal keypad with mappings to scancode EN-US QWERTY layout
 - Switch between extension behaviour through CLI
 
+## Setup
+### Dependencies
+- C23-capable compiler (built with Apple clang version 21.0.0)
+- SDL3 (built against SDL 3.4.12)
+- Make
+
+### Build
+While packages for SDL3 do seem to exist. I had to [build from source](https://github.com/libsdl-org/SDL/blob/main/INSTALL.md)
+
+```sh
+git clone https://github.com/Luke1245/chip-8-interpreter/
+cd chip-8-interpreter
+make
+```
+
+### Run
+```sh
+./build/release/main <rom_path> [-s scale factor] [-e extension]
+```
+
 ## References
 - [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM)
 - [Tobias V. I. Langhoff's High Level Guide](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)

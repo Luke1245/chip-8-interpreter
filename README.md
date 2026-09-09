@@ -8,6 +8,13 @@ CHIP-8 is an interpreted programming language from the 1970s. Initially used for
 
 ![A gif of the classic Brick video game running on the CHIP-8 interpreter](docs/assets/brick_chip8.gif)
 
+## Features
+- Full implementation of CHIP-8 instruction set, with 35-opcodes
+- 64 $\times$ 32 original pixel display with scale factors and custom colours
+- 60 Hz delay and sound timers, independent of CPU execution speed
+- Hexadecimal keypad with mappings to scancode EN-US QWERTY layout
+- Switch between extension behaviour through CLI
+
 ## References
 - [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM)
 - [Tobias V. I. Langhoff's High Level Guide](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)

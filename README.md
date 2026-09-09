@@ -35,6 +35,30 @@ make
 ./build/release/main <rom_path> [-s scale factor] [-e extension]
 ```
 
+## Usage
+The original CHIP-8 keypad is a 4x4 hexadecimal grid. In this interpreter it has been mapped onto a EN-US QWERTy keyboard with scancodes as follows:
+
+```
+CHIP-8 keypad         Keyboard
+ 1  2  3  C           1  2  3  4
+ 4  5  6  D    -->    Q  W  E  R
+ 7  8  9  E           A  S  D  F
+ A  0  B  F           Z  X  C  V
+```
+
+The following keys are also in-use:
+- SPACE: Pauses the interpreter
+- ESCAPE: Quits the interpreter
+- O: Decreases volume
+- P: Increases volume
+
+The following flags can be passed as arguments on the command line
+
+| Flag | Usage                                                                                                                                       |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| `-s` | The scale factor used in upscaling the original 64 by 32 pixel display. Default is 20                                                       |
+| `-e` | The interpreter extension. This chooses the behaviour for ambiguous opcodes. Possible values of: CHIP8, SUPERCHIP, XOCHIP. Default is CHIP8 |
+
 ## References
 - [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM)
 - [Tobias V. I. Langhoff's High Level Guide](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)

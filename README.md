@@ -59,6 +59,18 @@ The following flags can be passed as arguments on the command line
 | `-s` | The scale factor used in upscaling the original 64 by 32 pixel display. Default is 20                                                       |
 | `-e` | The interpreter extension. This chooses the behaviour for ambiguous opcodes. Possible values of: CHIP8, SUPERCHIP, XOCHIP. Default is CHIP8 |
 
+## Architecture
+The interpreter is split into files that handle separate important data for the program to work.
+
+| File       | Purpose                                                                                   |
+|------------|-------------------------------------------------------------------------------------------|
+| main.c     | Pull all the components together and execute the main loop of the interpreter             |
+| config.c   | Initialise the config and handle command line arguments                                   |
+| platform.c | Handle all components involving SDL3, i.e. audio, rendering, and input                    |
+| chip8.c    | Main logic of the interpreter. Memory map initialisation, timers, and all opcode handling |
+
+The main loop runs a fixed number of instructions per frame. For original CHIP-8, this is eight instructions. For other extensions, this is configurable via the clock rate in the config struct. Delay and sound timers are decremented at 60hz.
+
 ## References
 - [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM)
 - [Tobias V. I. Langhoff's High Level Guide](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)

@@ -80,6 +80,17 @@ Because the CHIP-8 interpreter has relatively few opcodes compared to other emul
 
 As different instructions require different amounts of time to execute, keeping consistent timing for the interpreter is important for a smooth experience. To solve this, we use functions from SDL that allow us to calculate the time elapsed per frame, and set a delay to next frame execution dependent on this elapsed time. If the elapsed time is less than the delay for (roughly, SDL does not take floats for delay values) 60hz (which is 16.67ms), then we delay for 16.67 - elapsed time. Otherwise, we delay for 0 seconds, as the elapsed time has already delayed the next frame enough.
 
+## Behavioural differences
+The original CHIP-8 specification is not the only one that exists for the language. There are others such as SUPER-CHIP and XO-CHIP, which have different behaviours for certain opcodes. This means not all ROMs are compatible with every CHIP-8 interpreter. For this interpreter, I have implemented the various different behaviours of SUPER-CHIP and XO-CHIP, which can be configured through the CLI options.
+
+| Instruction(s) / Behaviour                      | CHIP-8                                        | SUPER-CHIP                        | XO-CHIP                                |
+|-------------------------------------------------|-----------------------------------------------|-----------------------------------|----------------------------------------|
+| `0x8XY1, 0x8XY2, 0x8XY3` / Bitwise AND, OR, XOR | The flags register is reset to 0              | The flags register is untouched   | The flags register is untouched        |
+| `0xFX55, 0xFX65` / Register dump and load       | The index register is incremented             | The index register is untouched   | The index register is incremented      |
+| Display wait                                    | Speed is limited to max 60 sprites per second | Speed is not limited              | Speed is not limited                   |
+| `0x8XY6, 0x8XYE` / Bitwise left and right shift | Set value of `vX` to `vY` before shift        | Only operate on the `vX` register | Set value of `vX` to `vY` before shift |
+| `BNNN / BXNN` / Jump with offset                | Jump to address `NNN` + `v0`                  | Jump to address `XNN` + `vX`      | Jump to address `NNN` + `v0`           |
+
 ## References
 - [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM)
 - [Tobias V. I. Langhoff's High Level Guide](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)

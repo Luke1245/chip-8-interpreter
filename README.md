@@ -71,6 +71,15 @@ The interpreter is split into files that handle separate important data for the 
 
 The main loop runs a fixed number of instructions per frame. For original CHIP-8, this is eight instructions. For other extensions, this is configurable via the clock rate in the config struct. Delay and sound timers are decremented at 60hz.
 
+## Design notes
+**Instruction Decoding**
+
+Because the CHIP-8 interpreter has relatively few opcodes compared to other emulator / interpreter projects, a large switch statement with nesting is an acceptable design decision. However, for future projects, I would like to attempt to implement more efficient techniques such as a function pointer table.
+
+**Timing**
+
+As different instructions require different amounts of time to execute, keeping consistent timing for the interpreter is important for a smooth experience. To solve this, we use functions from SDL that allow us to calculate the time elapsed per frame, and set a delay to next frame execution dependent on this elapsed time. If the elapsed time is less than the delay for (roughly, SDL does not take floats for delay values) 60hz (which is 16.67ms), then we delay for 16.67 - elapsed time. Otherwise, we delay for 0 seconds, as the elapsed time has already delayed the next frame enough.
+
 ## References
 - [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM)
 - [Tobias V. I. Langhoff's High Level Guide](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)

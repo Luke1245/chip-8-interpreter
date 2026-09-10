@@ -91,6 +91,13 @@ The original CHIP-8 specification is not the only one that exists for the langua
 | `0x8XY6, 0x8XYE` / Bitwise left and right shift | Set value of `vX` to `vY` before shift        | Only operate on the `vX` register | Set value of `vX` to `vY` before shift |
 | `BNNN / BXNN` / Jump with offset                | Jump to address `NNN` + `v0`                  | Jump to address `XNN` + `vX`      | Jump to address `NNN` + `v0`           |
 
+## Testing
+[The CHIP-8 test suite](https://github.com/Timendus/chip8-test-suite) by [Timendus](https://github.com/Timendus) is the most comprehensive set of tests for the CHIP-8 interpreter available. I used this to test all key functionality of my interpreter. It was especially useful in the development of the "quirks" section. Below are images of my interpreter passing the flags test and the quirks test (under the CHIP-8 original specification option). These are key tests for the logic functionalities of the interpreter.
+
+![An image of the interpreter running the flags test, passing them all](docs/assets/flags-test.png)
+
+![An image of the interpreter running the quriks test, passing them all](docs/assets/chip-8-quirks-test.png)
+
 ## References
 - [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM)
 - [Tobias V. I. Langhoff's High Level Guide](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)

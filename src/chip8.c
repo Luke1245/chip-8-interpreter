@@ -1,6 +1,5 @@
 #include "chip8.h"
 
-#include <SDL3/SDL.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -48,8 +47,7 @@ bool initialise_chip8(chip8_t* chip8, const char* rom_name) {
     FILE* rom = fopen(rom_name, "rb");
 
     if (!rom) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "ROM file %s does not exist or is invalid\n", rom_name);
+        fprintf(stderr, "ROM file %s does not exist or is invalid\n", rom_name);
         return false;
     }
 
@@ -60,14 +58,12 @@ bool initialise_chip8(chip8_t* chip8, const char* rom_name) {
     rewind(rom);
 
     if (rom_size > max_size) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "ROM file %s is too big",
-                     rom_name);
+        fprintf(stderr, "ROM file %s is too big\n", rom_name);
         return false;
     }
 
     if (fread(chip8->ram + entry_point, rom_size, 1, rom) != 1) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                     "Unable to read ROM file into memory");
+        fprintf(stderr, "Unable to read ROM file into memory\n");
         return false;
     }
 

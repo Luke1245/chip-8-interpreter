@@ -18,6 +18,9 @@ all: $(TARGET)
 
 debug: $(TARGET_DEBUG)
 
+bench: $(SRC_DIR)/bench.c $(SRC_DIR)/chip8.c
+	$(CC) $(CFLAGS) -O2 -o bench $(SRC_DIR)/bench.c $(SRC_DIR)/chip8.c
+
 $(TARGET): $(OBJS_RELEASE) | $(RELEASE_DIR)
 	$(CC) $(OBJS_RELEASE) -o $@ $(LDFLAGS)
 

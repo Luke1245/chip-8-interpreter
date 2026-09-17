@@ -98,6 +98,10 @@ The original CHIP-8 specification is not the only one that exists for the langua
 
 ![An image of the interpreter running the quriks test, passing them all](docs/assets/chip-8-quirks-test.png)
 
+The benchmark harness in bench.c was also used with a custom ROM (bench.ch8) that tests a mix of ALU, register, index, and branching instructions without I/O.
+
+It achieves 369M instructions/second, over a median of 3 runs, on an Apple M3 at -O2.
+
 ## References
 - [Cowgod's Chip-8 Technical Reference](http://devernay.free.fr/hacks/chip8/C8TECH10.HTM)
 - [Tobias V. I. Langhoff's High Level Guide](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)

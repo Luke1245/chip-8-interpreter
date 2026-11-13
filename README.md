@@ -1,3 +1,4 @@
+[![AI:0 ZERO](https://img.shields.io/badge/AI-ZERO-grey?style=flat&logoSize=auto&labelColor=13171f)](https://0rwx.com)
 # CHIP-8 Interpreter
 
 A CHIP-8 Interpreter written in C23 with SDL3 for graphics, audio, and input.
